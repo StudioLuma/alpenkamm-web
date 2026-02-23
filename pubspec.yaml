@@ -1,0 +1,44 @@
+name: alpenkamm
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  camera: ^0.10.5+9
+  zxing2: ^0.2.1
+  flutter:
+    sdk: flutter
+
+  # Speicher
+  shared_preferences: ^2.2.2
+
+  # Animation / UI
+  cupertino_icons: ^1.0.8
+  confetti: ^0.7.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.13.1
+  flutter_lints: ^6.0.0
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/app_icon.png
+  adaptive_icon_background: "#B8C1B0"
+  adaptive_icon_foreground: assets/app_icon.png
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/luma_color.png
+    - assets/luma_gray.png
+    - assets/alpenkamm_color.jpg
+    - assets/alpenkamm_gray.jpg
+    - assets/app_icon.png
