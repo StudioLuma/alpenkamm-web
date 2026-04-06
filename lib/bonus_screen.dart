@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:confetti/confetti.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:confetti/confetti.dart';
+
 import 'qr_scan_web.dart';
 
 class BonusScreen extends StatefulWidget {
   final String username;
   final String salon;
+  final String userId;
 
   const BonusScreen({
     super.key,
     required this.username,
     required this.salon,
+    required this.userId,
   });
 
   @override
@@ -30,7 +33,6 @@ class _BonusScreenState extends State<BonusScreen>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
-  // ⭐ Web-sichere Vibrationsfunktion
   void vibrate() {
     if (!kIsWeb) {
       HapticFeedback.mediumImpact();
@@ -40,7 +42,7 @@ class _BonusScreenState extends State<BonusScreen>
   @override
   void initState() {
     super.initState();
-    _loadBonusPoints();
+    _loadBonusPointsFromFirestore();
 
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 2),
@@ -77,30 +79,48 @@ class _BonusScreenState extends State<BonusScreen>
     super.dispose();
   }
 
-  Future<void> _loadBonusPoints() async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = "bonus_${widget.username}_${widget.salon}";
-    final loadedPoints = prefs.getInt(key) ?? 0;
+  Future<void> _loadBonusPointsFromFirestore() async {
+    final doc = await FirebaseFirestore.instance
+        .collection("users")
+        .doc(widget.userId)
+        .get();
 
-    setState(() {
-      bonusPoints = loadedPoints;
-    });
+    if (doc.exists) {
+      setState(() {
+        bonusPoints = doc["bonusPoints"] ?? 0;
+      });
 
-    if (loadedPoints == 10) {
-      _triggerPulse();
+      if (bonusPoints == 10) {
+        _triggerPulse();
+      }
     }
   }
 
-  Future<void> _saveBonusPoints() async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = "bonus_${widget.username}_${widget.salon}";
-    await prefs.setInt(key, bonusPoints);
+  Future<void> _saveBonusPointsToFirestore() async {
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(widget.userId)
+        .update({
+      "bonusPoints": bonusPoints,
+    });
   }
 
   void _triggerPulse() {
     _pulseController.forward().then((_) {
       _pulseController.reverse();
     });
+  }
+
+  bool isValidBonusCode(String code) {
+    if (widget.salon == "Studio Luma" && code == "LUMA_BONUS") {
+      return true;
+    }
+
+    if (widget.salon == "Alpenkamm" && code == "ALPENKAMM_BONUS") {
+      return true;
+    }
+
+    return false;
   }
 
   @override
@@ -204,7 +224,6 @@ class _BonusScreenState extends State<BonusScreen>
 
                       const SizedBox(height: 40),
 
-                      // ⭐ BUTTON MIT KORREKTEM WEB-SCANNER
                       _AnimatedButton(
                         title: "Punkte hinzufügen",
                         color: Colors.black87,
@@ -222,20 +241,30 @@ class _BonusScreenState extends State<BonusScreen>
                           if (!mounted) return;
 
                           if (result != null) {
-                            setState(() {
-                              if (bonusPoints < 10) {
-                                bonusPoints++;
-                              } else {
-                                bonusPoints = 1;
+                            if (isValidBonusCode(result)) {
+                              setState(() {
+                                if (bonusPoints < 10) {
+                                  bonusPoints++;
+                                } else {
+                                  bonusPoints = 1;
+                                }
+                              });
+
+                              await _saveBonusPointsToFirestore();
+
+                              _confettiController.play();
+                              vibrate();
+
+                              if (bonusPoints == 10) {
+                                _triggerPulse();
                               }
-                            });
-
-                            _saveBonusPoints();
-                            _confettiController.play();
-                            vibrate();
-
-                            if (bonusPoints == 10) {
-                              _triggerPulse();
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Ungültiger QR‑Code"),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
                             }
                           }
                         },

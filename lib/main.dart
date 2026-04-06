@@ -1,7 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 import 'splash_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: "AIzaSyAid1tu1wnfEuMpo9dkS7cFb1f-xElquxo",
+        authDomain: "alpenkamm-web.firebaseapp.com",
+        projectId: "alpenkamm-web",
+        storageBucket: "alpenkamm-web.firebasestorage.app",
+        messagingSenderId: "781091560125",
+        appId: "1:781091560125:web:d77cf50ba892d501bf35d4",
+      ),
+    );
+  } else {
+    await Firebase.initializeApp();
+  }
+
   runApp(const AlpenkammApp());
 }
 

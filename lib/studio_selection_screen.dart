@@ -3,8 +3,13 @@ import 'bonus_screen.dart';
 
 class StudioSelectionScreen extends StatefulWidget {
   final String username;
+  final String userId; // ⭐ NEU
 
-  const StudioSelectionScreen({super.key, required this.username});
+  const StudioSelectionScreen({
+    super.key,
+    required this.username,
+    required this.userId,
+  });
 
   @override
   State<StudioSelectionScreen> createState() => _StudioSelectionScreenState();
@@ -64,7 +69,7 @@ class _StudioSelectionScreenState extends State<StudioSelectionScreen>
 
                 const SizedBox(height: 40),
 
-                // ⭐ Alpenkamm zuerst
+                // ⭐ Alpenkamm
                 _StudioCard(
                   title: "Alpenkamm",
                   imagePath: "assets/alpenkamm_color.jpg",
@@ -75,6 +80,7 @@ class _StudioSelectionScreenState extends State<StudioSelectionScreen>
                         builder: (_) => BonusScreen(
                           username: widget.username,
                           salon: "Alpenkamm",
+                          userId: widget.userId, // ⭐ WICHTIG
                         ),
                       ),
                     );
@@ -94,6 +100,7 @@ class _StudioSelectionScreenState extends State<StudioSelectionScreen>
                         builder: (_) => BonusScreen(
                           username: widget.username,
                           salon: "Studio Luma",
+                          userId: widget.userId, // ⭐ WICHTIG
                         ),
                       ),
                     );
@@ -194,7 +201,6 @@ class _StudioCardState extends State<_StudioCard>
           ),
           child: Row(
             children: [
-              // ⭐ Rundes Logo
               ClipOval(
                 child: Image.asset(
                   widget.imagePath,

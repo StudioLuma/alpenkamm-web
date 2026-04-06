@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'studio_selection_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -11,7 +11,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
-  final TextEditingController _controller = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController birthdayController = TextEditingController();
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -20,7 +21,6 @@ class _LoginScreenState extends State<LoginScreen>
   void initState() {
     super.initState();
 
-    // ⭐ Fade-In Animation
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -41,30 +41,37 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> loginUser() async {
-    final prefs = await SharedPreferences.getInstance();
+    final name = nameController.text.trim();
+    final birthday = birthdayController.text.trim();
 
-    if (!mounted) return;
-
-    final name = _controller.text.trim();
-
-    if (name.isEmpty) {
-      _showMessage("Bitte gib deinen Nutzernamen ein.");
+    if (name.isEmpty || birthday.isEmpty) {
+      _showMessage("Bitte alle Felder ausfüllen.");
       return;
     }
 
-    List<String> users = prefs.getStringList("users") ?? [];
+    // Firestore-Abfrage
+    final query = await FirebaseFirestore.instance
+        .collection("users")
+        .where("name", isEqualTo: name)
+        .where("birthday", isEqualTo: birthday)
+        .get();
 
-    if (!users.contains(name)) {
-      _showMessage("Dieser Nutzername existiert nicht.");
+    if (query.docs.isEmpty) {
+      _showMessage("Nutzer nicht gefunden.");
       return;
     }
+
+    final userDoc = query.docs.first;
 
     if (!mounted) return;
 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => StudioSelectionScreen(username: name),
+        builder: (_) => StudioSelectionScreen(
+          username: userDoc["name"],
+          userId: userDoc.id,
+        ),
       ),
     );
   }
@@ -89,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // ⭐ Icon-Kreis (Login-Icon bleibt wie du willst)
+                // Icon-Kreis
                 Container(
                   width: 120,
                   height: 120,
@@ -114,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen>
                 const SizedBox(height: 35),
 
                 const Text(
-                  "Mit Nutzernamen anmelden",
+                  "Mit Nutzerdaten anmelden",
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
@@ -125,35 +132,22 @@ class _LoginScreenState extends State<LoginScreen>
 
                 const SizedBox(height: 25),
 
-                // ⭐ Eingabefeld in Card-Optik
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      hintText: "Nutzername",
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 18,
-                      ),
-                      border: InputBorder.none,
-                    ),
-                  ),
+                // Name
+                _inputCard(
+                  controller: nameController,
+                  hint: "Name",
+                ),
+
+                const SizedBox(height: 20),
+
+                // Geburtsdatum
+                _inputCard(
+                  controller: birthdayController,
+                  hint: "Geburtsdatum (TT.MM.JJJJ)",
                 ),
 
                 const SizedBox(height: 35),
 
-                // ⭐ Button mit Scale-Effekt
                 _AnimatedButton(
                   title: "Anmelden",
                   onTap: loginUser,
@@ -165,9 +159,39 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
   }
+
+  Widget _inputCard({
+    required TextEditingController controller,
+    required String hint,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          hintText: hint,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 18,
+          ),
+          border: InputBorder.none,
+        ),
+      ),
+    );
+  }
 }
 
-// ⭐ Scale-Button wie im HomeScreen & RegisterScreen
+// Scale-Button
 class _AnimatedButton extends StatefulWidget {
   final String title;
   final VoidCallback onTap;
