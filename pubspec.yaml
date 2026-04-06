@@ -8,30 +8,34 @@ environment:
   sdk: ^3.10.4
 
 dependencies:
-  camera: ^0.10.5+9
-  zxing2: ^0.2.1
   flutter:
     sdk: flutter
 
-  # Speicher
+  # Kamera & QR
+  camera: ^0.10.5+9
+  zxing2: ^0.2.1
+
+  # Lokaler Speicher (wird später durch Firestore ersetzt)
   shared_preferences: ^2.2.2
 
   # Animation / UI
   cupertino_icons: ^1.0.8
   confetti: ^0.7.0
 
+  # Firebase (für Web!)
+  firebase_core: ^3.0.0
+  cloud_firestore: ^5.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_launcher_icons: ^0.13.1
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter_launcher_icons:
-  android: true
-  ios: true
+  android: false
+  ios: false
   image_path: assets/app_icon.png
-  adaptive_icon_background: "#B8C1B0"
-  adaptive_icon_foreground: assets/app_icon.png
 
 flutter:
   uses-material-design: true
