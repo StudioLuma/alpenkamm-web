@@ -41,7 +41,9 @@
     function removeSplashFromWeb() {
       document.getElementById("splash")?.remove();
       document.getElementById("splash-branding")?.remove();
-      document.body.style.background = "transparent";
+
+      // ⭐ FIX: Hintergrund wiederherstellen, damit nach Tastatur kein Splash sichtbar bleibt
+      document.body.style.background = "#6B7A3A";
     }
   </script>
 
